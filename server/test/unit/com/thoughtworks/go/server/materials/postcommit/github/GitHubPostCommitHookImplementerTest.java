@@ -19,10 +19,11 @@ package com.thoughtworks.go.server.materials.postcommit.github;
 import com.thoughtworks.go.config.materials.git.GitMaterial;
 import com.thoughtworks.go.domain.materials.Material;
 import com.thoughtworks.go.util.command.UrlArgument;
-import org.hamcrest.core.Is;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.*;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -32,45 +33,151 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-public class GithubPostCommitHookImplementerTest {
+public class GitHubPostCommitHookImplementerTest {
 
-    private GithubPostCommitHookImplementer implementer;
-    private String URL_ENCODED_GITHUB_ORGANISATION_PAYLOAD = "%7B%0A%20%20%22ref%22%3A%20%22refs%5C%2Fheads%5C%2Fmaster%22%2C%0A%20%20%22before%22%3A%20%2213b791c0bb5959f4717bc060820abbef9e953713%22%2C%0A%20%20%22after%22%3A%20%2245c6afe2fb45cb8aad5860a421835d1d691aeef5%22%2C%0A%20%20%22created%22%3A%20false%2C%0A%20%20%22deleted%22%3A%20false%2C%0A%20%20%22forced%22%3A%20false%2C%0A%20%20%22base_ref%22%3A%20null%2C%0A%20%20%22compare%22%3A%20%22https%3A%5C%2F%5C%2Fgithub.atcloud.io%5C%2Ftesting-webhooks%5C%2Ftesting-webhooks%5C%2Fcompare%5C%2F13b791c0bb59...45c6afe2fb45%22%2C%0A%20%20%22commits%22%3A%20%5B%5D%2C%0A%20%20%22head_commit%22%3A%20%7B%0A%20%20%20%20%22id%22%3A%20%2245c6afe2fb45cb8aad5860a421835d1d691aeef5%22%2C%0A%20%20%20%20%22tree_id%22%3A%20%225f48dc48de3bacead579ae80f5882124c83b3a02%22%2C%0A%20%20%20%20%22distinct%22%3A%20true%2C%0A%20%20%20%20%22message%22%3A%20%22Update%20README.md%22%2C%0A%20%20%20%20%22timestamp%22%3A%20%222017-04-05T18%3A43%3A03%2B01%3A00%22%2C%0A%20%20%20%20%22url%22%3A%20%22https%3A%5C%2F%5C%2Fgithub.atcloud.io%5C%2Ftesting-webhooks%5C%2Ftesting-webhooks%5C%2Fcommit%5C%2F45c6afe2fb45cb8aad5860a421835d1d691aeef5%22%2C%0A%20%20%20%20%22author%22%3A%20%7B%0A%20%20%20%20%20%20%22name%22%3A%20%22Stephen%20Murby%22%2C%0A%20%20%20%20%20%20%22email%22%3A%20%22Stephen.Murby%40autotrader.co.uk%22%2C%0A%20%20%20%20%20%20%22username%22%3A%20%22Stephen-Murby%22%0A%20%20%20%20%7D%2C%0A%20%20%20%20%22committer%22%3A%20%7B%0A%20%20%20%20%20%20%22name%22%3A%20%22GitHub%20Enterprise%22%2C%0A%20%20%20%20%20%20%22email%22%3A%20%22noreply%40github.atcloud.io%22%0A%20%20%20%20%7D%2C%0A%20%20%20%20%22added%22%3A%20%5B%0A%20%20%20%20%20%20%0A%20%20%20%20%5D%2C%0A%20%20%20%20%22removed%22%3A%20%5B%0A%20%20%20%20%20%20%0A%20%20%20%20%5D%2C%0A%20%20%20%20%22modified%22%3A%20%5B%0A%20%20%20%20%20%20%22README.md%22%0A%20%20%20%20%5D%0A%20%20%7D%2C%0A%20%20%22repository%22%3A%20%7B%20%20%20%20%0A%20%20%20%20%22git_url%22%3A%20%22http%3A%5C%2F%5C%2Fgithub.com%5C%2Forganisation%5C%2Frepository.git%22%2C%0A%20%20%20%20%22master_branch%22%3A%20%22master%22%2C%0A%20%20%20%20%22organization%22%3A%20%22testing-webhooks%22%0A%20%20%7D%2C%0A%20%20%22pusher%22%3A%20%7B%0A%20%20%20%20%22name%22%3A%20%22Stephen-Murby%22%2C%0A%20%20%20%20%22email%22%3A%20%22Stephen.Murby%40autotrader.co.uk%22%0A%20%20%7D%2C%0A%20%20%22organization%22%3A%20%7B%0A%20%20%20%20%22login%22%3A%20%22testing-webhooks%22%2C%0A%20%20%20%20%22description%22%3A%20null%0A%20%20%7D%2C%0A%20%20%22sender%22%3A%20%7B%0A%20%20%20%20%22login%22%3A%20%22Stephen-Murby%22%0A%20%20%7D%0A%7D";
+    private GitHubPostCommitHookImplementer implementer;
+    private String URL_ENCODED_GITHUB_ORGANISATION_PAYLOAD = "%7B%0A%20%20%22ref%22%3A%20%22refs%2Fheads%2Fmaster%22%2C%0A%20%20%22before%22%3A%20%2213b791c0bb5959f4717bc060820abbef9e953713%22%2C%0A%20%20%22after%22%3A%20%2245c6afe2fb45cb8aad5860a421835d1d691aeef5%22%2C%0A%20%20%22created%22%3A%20false%2C%0A%20%20%22deleted%22%3A%20false%2C%0A%20%20%22forced%22%3A%20false%2C%0A%20%20%22base_ref%22%3A%20null%2C%0A%20%20%22compare%22%3A%20%22https%3A%2F%2Fgithub.atcloud.io%2Ftesting-webhooks%2Ftesting-webhooks%2Fcompare%2F13b791c0bb59...45c6afe2fb45%22%2C%0A%20%20%22commits%22%3A%20%5B%5D%2C%0A%20%20%22head_commit%22%3A%20%7B%0A%20%20%20%20%22id%22%3A%20%2245c6afe2fb45cb8aad5860a421835d1d691aeef5%22%2C%0A%20%20%20%20%22tree_id%22%3A%20%225f48dc48de3bacead579ae80f5882124c83b3a02%22%2C%0A%20%20%20%20%22distinct%22%3A%20true%2C%0A%20%20%20%20%22message%22%3A%20%22Update%20README.md%22%2C%0A%20%20%20%20%22timestamp%22%3A%20%222017-04-05T18%3A43%3A03%2B01%3A00%22%2C%0A%20%20%20%20%22url%22%3A%20%22https%3A%2F%2Fgithub.atcloud.io%2Ftesting-webhooks%2Ftesting-webhooks%2Fcommit%2F45c6afe2fb45cb8aad5860a421835d1d691aeef5%22%2C%0A%20%20%20%20%22author%22%3A%20%7B%0A%20%20%20%20%20%20%22name%22%3A%20%22Stephen%20Murby%22%2C%0A%20%20%20%20%20%20%22email%22%3A%20%22Stephen.Murby%40autotrader.co.uk%22%2C%0A%20%20%20%20%20%20%22username%22%3A%20%22Stephen-Murby%22%0A%20%20%20%20%7D%2C%0A%20%20%20%20%22committer%22%3A%20%7B%0A%20%20%20%20%20%20%22name%22%3A%20%22GitHub%20Enterprise%22%2C%0A%20%20%20%20%20%20%22email%22%3A%20%22noreply%40github.atcloud.io%22%0A%20%20%20%20%7D%2C%0A%20%20%20%20%22added%22%3A%20%5B%0A%20%20%20%20%20%20%0A%20%20%20%20%5D%2C%0A%20%20%20%20%22removed%22%3A%20%5B%0A%20%20%20%20%20%20%0A%20%20%20%20%5D%2C%0A%20%20%20%20%22modified%22%3A%20%5B%0A%20%20%20%20%20%20%22README.md%22%0A%20%20%20%20%5D%0A%20%20%7D%2C%0A%20%20%22repository%22%3A%20%7B%0A%20%20%20%20%22full_name%22%3A%20%22organisation%2Frepository%22%2C%0A%20%20%20%20%22url%22%3A%20%22https%3A%2F%2Fgithub.com%2Forganisation%2Frepository%22%2C%0A%20%20%20%20%22git_url%22%3A%20%22git%3A%2F%2Fgithub.com%2Forganisation%2Frepository.git%22%2C%0A%20%20%20%20%22ssh_url%22%3A%20%22git%40github.com%3Aorganisation%2Frepository.git%22%2C%0A%20%20%20%20%22clone_url%22%3A%20%22https%3A%2F%2Fgithub.com%2Forganisation%2Frepository.git%22%2C%0A%20%20%20%20%22svn_url%22%3A%20%22https%3A%2F%2Fgithub.com%2Forganisation%2Frepository%22%0A%7D%2C%0A%20%20%22pusher%22%3A%20%7B%0A%20%20%20%20%22name%22%3A%20%22Stephen-Murby%22%2C%0A%20%20%20%20%22email%22%3A%20%22Stephen.Murby%40autotrader.co.uk%22%0A%20%20%7D%2C%0A%20%20%22organization%22%3A%20%7B%0A%20%20%20%20%22login%22%3A%20%22testing-webhooks%22%2C%0A%20%20%20%20%22description%22%3A%20null%0A%20%20%7D%2C%0A%20%20%22sender%22%3A%20%7B%0A%20%20%20%20%22login%22%3A%20%22Stephen-Murby%22%0A%20%20%7D%0A%7D";
+    private Set<Material> CONFIGURED_MATERIALS;
 
     @Before
     public void setUp() {
-        implementer = new GithubPostCommitHookImplementer();
+        implementer = new GitHubPostCommitHookImplementer();
+        CONFIGURED_MATERIALS = setupMaterials();
+    }
+
+    private Set<Material> setupMaterials() {
+        GitMaterial httpMaterialWithSuffix = mock(GitMaterial.class);
+        GitMaterial httpMaterialNoSuffix = mock(GitMaterial.class);
+        when(httpMaterialWithSuffix.getUrlArgument()).thenReturn(new UrlArgument("http://github.com/organisation/repository.git"));
+        when(httpMaterialNoSuffix.getUrlArgument()).thenReturn(new UrlArgument("http://github.com/organisation/repository"));
+
+        GitMaterial httpsMaterialWithSuffix = mock(GitMaterial.class);
+        GitMaterial httpsMaterialNoSuffix = mock(GitMaterial.class);
+        when(httpsMaterialWithSuffix.getUrlArgument()).thenReturn(new UrlArgument("https://github.com/organisation/repository.git"));
+        when(httpsMaterialNoSuffix.getUrlArgument()).thenReturn(new UrlArgument("https://github.com/organisation/repository"));
+
+        GitMaterial gitMaterialWithSuffix = mock(GitMaterial.class);
+        GitMaterial gitMaterialNoSuffix = mock(GitMaterial.class);
+        when(gitMaterialWithSuffix.getUrlArgument()).thenReturn(new UrlArgument("git://github.com/organisation/repository.git"));
+        when(gitMaterialNoSuffix.getUrlArgument()).thenReturn(new UrlArgument("git://github.com/organisation/repository"));
+
+        GitMaterial svnMaterialWithSuffix = mock(GitMaterial.class);
+        GitMaterial svnMaterialNoSuffix = mock(GitMaterial.class);
+        when(svnMaterialWithSuffix.getUrlArgument()).thenReturn(new UrlArgument("https://github.com/organisation/repository.git"));
+        when(svnMaterialNoSuffix.getUrlArgument()).thenReturn(new UrlArgument("https://github.com/organisation/repository"));
+
+        GitMaterial sshMaterialWithSuffix = mock(GitMaterial.class);
+        GitMaterial sshMaterialNoSuffix = mock(GitMaterial.class);
+        when(sshMaterialWithSuffix.getUrlArgument()).thenReturn(new UrlArgument("git@github.com/organisation/repository.git"));
+        when(sshMaterialNoSuffix.getUrlArgument()).thenReturn(new UrlArgument("git@github.com/organisation/repository"));
+
+        GitMaterial nonMatchingMaterial = mock(GitMaterial.class);
+        when(nonMatchingMaterial.getUrlArgument()).thenReturn(new UrlArgument("https://github.com/organisation/some_other_repository"));
+
+        Set<Material> configuredMaterials = new HashSet<>(
+                Arrays.asList(
+                        httpMaterialWithSuffix,
+                        httpMaterialNoSuffix,
+                        gitMaterialWithSuffix,
+                        gitMaterialNoSuffix,
+                        svnMaterialWithSuffix,
+                        svnMaterialNoSuffix,
+                        sshMaterialWithSuffix,
+                        sshMaterialNoSuffix,
+                        nonMatchingMaterial
+                )
+        );
+        return configuredMaterials;
     }
 
 
     @Test
     public void givenKnownMaterial_andRequestParamsContainingGithubPayload_returnMaterialsMatchingGitUrlInPayload() {
-        GitMaterial material1 = mock(GitMaterial.class);
-        when(material1.getUrlArgument()).thenReturn(new UrlArgument("http://github.com/organisation/repository.git"));
-        GitMaterial material2 = mock(GitMaterial.class);
-        when(material2.getUrlArgument()).thenReturn(new UrlArgument("http://github.com/organisation/some_other_repository.git"));
-        GitMaterial material3 = mock(GitMaterial.class);
-        when(material3.getUrlArgument()).thenReturn(new UrlArgument("https://machine.local.git"));
-        GitMaterial material4 = mock(GitMaterial.class);
-        when(material4.getUrlArgument()).thenReturn(new UrlArgument("https://machine.local.git"));
-        GitMaterial material5 = mock(GitMaterial.class);
-        when(material5.getUrlArgument()).thenReturn(new UrlArgument("http://github.com/organisation/repository.git"));
-        Set<Material> configuredMaterials = new HashSet<>(Arrays.asList(material1, material2, material3, material4, material5));
-
         Map requestParameters = new HashMap<String, String>();
-
         requestParameters.put("payload", URL_ENCODED_GITHUB_ORGANISATION_PAYLOAD);
 
-        Set<Material> matchingMaterials = implementer.prune(configuredMaterials, requestParameters);
+        Set<Material> matchingMaterials = implementer.prune(CONFIGURED_MATERIALS, requestParameters);
 
-        assertThat(matchingMaterials.size(), is(2));
-        assertThat(matchingMaterials, hasItem(material1));
-        assertThat(matchingMaterials, hasItem(material5));
+        assertThat(matchingMaterials.size(), is(8));
+    }
 
-        verify(material1).getUrlArgument();
-        verify(material2).getUrlArgument();
-        verify(material3).getUrlArgument();
-        verify(material4).getUrlArgument();
-        verify(material5).getUrlArgument();
+    @Test
+    public void givenMaterialConfiguredUsingAnyKnownProtocol_whenMatchingGitHubGitUrl_returnAllMaterialsOfSameRepository() throws UnsupportedEncodingException {
+        String payload = "{\n" +
+                "  \"repository\": {    \n" +
+                "    \"git_url\": \"https://github.com/organisation/repository\",\n" +
+                "    \"master_branch\": \"master\",\n" +
+                "    \"organization\": \"testing-webhooks\"\n" +
+                "  }\n" +
+                "}";
+        Map requestParameters = new HashMap<String, String>();
+        requestParameters.put("payload", URLEncoder.encode(payload, "UTF-8"));
+
+        Set<Material> matchingMaterials = implementer.prune(CONFIGURED_MATERIALS, requestParameters);
+        assertThat(matchingMaterials.size(), is(8));
+    }
+
+    @Test
+    public void givenMaterialConfiguredUsingAnyKnownProtocol_whenMatchingGitHubUrl_returnAllMaterialsOfSameRepository() throws UnsupportedEncodingException {
+        String payload = "{\n" +
+                "  \"repository\": {    \n" +
+                "    \"url\": \"https://github.com/organisation/repository\",\n" +
+                "    \"master_branch\": \"master\",\n" +
+                "    \"organization\": \"testing-webhooks\"\n" +
+                "  }\n" +
+                "}";
+        Map requestParameters = new HashMap<String, String>();
+        requestParameters.put("payload", URLEncoder.encode(payload, "UTF-8"));
+
+        Set<Material> matchingMaterials = implementer.prune(CONFIGURED_MATERIALS, requestParameters);
+        assertThat(matchingMaterials.size(), is(8));
+    }
+
+    @Test
+    public void givenMaterialConfiguredUsingAnyKnownProtocol_whenMatchingGitHubSshUrl_returnAllMaterialsOfSameRepository() throws UnsupportedEncodingException {
+        String payload = "{\n" +
+                "  \"repository\": {    \n" +
+                "    \"ssh_url\": \"https://github.com/organisation/repository\",\n" +
+                "    \"master_branch\": \"master\",\n" +
+                "    \"organization\": \"testing-webhooks\"\n" +
+                "  }\n" +
+                "}";
+        Map requestParameters = new HashMap<String, String>();
+        requestParameters.put("payload", URLEncoder.encode(payload, "UTF-8"));
+
+        Set<Material> matchingMaterials = implementer.prune(CONFIGURED_MATERIALS, requestParameters);
+        assertThat(matchingMaterials.size(), is(8));
+    }
+
+    @Test
+    public void givenMaterialConfiguredUsingAnyKnownProtocol_whenMatchingGitHubCloneUrl_returnAllMaterialsOfSameRepository() throws UnsupportedEncodingException {
+        String payload = "{\n" +
+                "  \"repository\": {    \n" +
+                "    \"clone_url\": \"https://github.com/organisation/repository\",\n" +
+                "    \"master_branch\": \"master\",\n" +
+                "    \"organization\": \"testing-webhooks\"\n" +
+                "  }\n" +
+                "}";
+        Map requestParameters = new HashMap<String, String>();
+        requestParameters.put("payload", URLEncoder.encode(payload, "UTF-8"));
+
+        Set<Material> matchingMaterials = implementer.prune(CONFIGURED_MATERIALS, requestParameters);
+        assertThat(matchingMaterials.size(), is(8));
+    }
+
+    @Test
+    public void givenMaterialConfiguredUsingAnyKnownProtocol_whenMatchingGitHubSvnUrl_returnAllMaterialsOfSameRepository() throws UnsupportedEncodingException {
+        String payload = "{\n" +
+                "  \"repository\": {    \n" +
+                "    \"svn_url\": \"https://github.com/organisation/repository\",\n" +
+                "    \"master_branch\": \"master\",\n" +
+                "    \"organization\": \"testing-webhooks\"\n" +
+                "  }\n" +
+                "}";
+        Map requestParameters = new HashMap<String, String>();
+        requestParameters.put("payload", URLEncoder.encode(payload, "UTF-8"));
+
+        Set<Material> matchingMaterials = implementer.prune(CONFIGURED_MATERIALS, requestParameters);
+        assertThat(matchingMaterials.size(), is(8));
     }
 }

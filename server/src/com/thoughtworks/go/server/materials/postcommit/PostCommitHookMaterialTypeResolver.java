@@ -20,7 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.thoughtworks.go.server.materials.postcommit.git.GitPostCommitHookImplementer;
-import com.thoughtworks.go.server.materials.postcommit.github.GithubPostCommitHookImplementer;
+import com.thoughtworks.go.server.materials.postcommit.github.GitHubPostCommitHookImplementer;
 import com.thoughtworks.go.server.materials.postcommit.mercurial.MercurialPostCommitHookImplementer;
 import com.thoughtworks.go.server.materials.postcommit.pluggablescm.PluggableSCMPostCommitHookImplementer;
 import com.thoughtworks.go.server.materials.postcommit.svn.SvnPostCommitHookImplementer;
@@ -36,8 +36,8 @@ public class PostCommitHookMaterialTypeResolver {
     public PostCommitHookMaterialTypeResolver() {
         allKnownMaterialTypes.add(new UnknownPostCommitHookMaterialType());
         allKnownMaterialTypes.add(new SvnPostCommitHookMaterialType());
-        allKnownMaterialTypes.add(new GitPostCommitHookMaterialType());
         allKnownMaterialTypes.add(new GithubPostCommitHookMaterialType());
+        allKnownMaterialTypes.add(new GitPostCommitHookMaterialType());
         allKnownMaterialTypes.add(new MercurialPostCommitHookMaterialType());
         allKnownMaterialTypes.add(new PluggableSCMPostCommitHookMaterialType());
     }
@@ -115,7 +115,7 @@ public class PostCommitHookMaterialTypeResolver {
 
         @Override
         public PostCommitHookImplementer getImplementer() {
-            return new GithubPostCommitHookImplementer();
+            return new GitHubPostCommitHookImplementer();
         }
     }
 

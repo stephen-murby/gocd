@@ -24,16 +24,25 @@ import com.thoughtworks.go.server.materials.postcommit.PostCommitHookImplementer
 import com.thoughtworks.go.server.materials.postcommit.UrlMatchers;
 
 import java.io.UnsupportedEncodingException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URLDecoder;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 
-public class GithubPostCommitHookImplementer implements PostCommitHookImplementer {
+public class GitHubPostCommitHookImplementer implements PostCommitHookImplementer {
 
-    static final String REPO_URL_PARAM_KEY = "git_url";
+//    final String REPO_URL_PARAM_KEY = "url";
+//    final String REPO_SSH_URL_PARAM_KEY = "ssh_url";
+//    final String REPO_CLONE_URL_PARAM_KEY = "clone_url";
+//    final String REPO_SVN_URL_PARAM_KEY = "svn_url";
+
+    final String REPO_GIT_URL_PARAM_KEY = "url";
+    private String REPO_OBJECT_KEY = "repository";
+
     private final UrlMatchers validators = new UrlMatchers();
-    private String REPO_OBJECT_KEY;
 
     @Override
     public Set<Material> prune(Set<Material> materials, Map params) {
@@ -46,14 +55,14 @@ public class GithubPostCommitHookImplementer implements PostCommitHookImplemente
             return prunedCollection;
         }
 
-        REPO_OBJECT_KEY = "repository";
         if( decodedParams.getAsJsonObject("repository") != null
-                && decodedParams.getAsJsonObject(REPO_OBJECT_KEY).get(REPO_URL_PARAM_KEY).getAsString() != null
-                && !decodedParams.getAsJsonObject(REPO_OBJECT_KEY).get(REPO_URL_PARAM_KEY).getAsString().isEmpty()
+                && decodedParams.getAsJsonObject(REPO_OBJECT_KEY).get(REPO_GIT_URL_PARAM_KEY).getAsString() != null
+                && !decodedParams.getAsJsonObject(REPO_OBJECT_KEY).get(REPO_GIT_URL_PARAM_KEY).getAsString().isEmpty()
                 ) {
-            String paramRepoUrl = decodedParams.getAsJsonObject(REPO_OBJECT_KEY).get(REPO_URL_PARAM_KEY).getAsString();
+            String paramRepoUrl = decodedParams.getAsJsonObject(REPO_OBJECT_KEY).get("url").getAsString();
+            String repoFullName = decodedParams.getAsJsonObject(REPO_OBJECT_KEY).get("full_name").getAsString();
             for (Material material : materials) {
-                if (material instanceof GitMaterial && isUrlEqual(paramRepoUrl, (GitMaterial) material)) {
+                if (material instanceof GitMaterial && isUrlEqual(paramRepoUrl, (GitMaterial) material, repoFullName)) {
                     prunedCollection.add(material);
                 }
             }
@@ -73,8 +82,20 @@ public class GithubPostCommitHookImplementer implements PostCommitHookImplemente
         return URLDecoder.decode(payload, "utf-8");
     }
 
-    boolean isUrlEqual(String paramRepoUrl, GitMaterial material) {
+    private boolean isUrlEqual(String paramRepoUrl, GitMaterial material, String repoFullName) {
+
+        URI repoUri = null;
         String materialUrl = material.getUrlArgument().forCommandline();
+        try {
+            repoUri = new URI(paramRepoUrl);
+            Pattern pattern = Pattern.compile("^(git://|git@|https://|http://)" + repoUri.getHost() + "[/:]" + repoFullName + "(.git)?$");
+            if ( pattern.matcher(materialUrl).matches()) {
+                return true;
+            }
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+        }
+
         return validators.perform(paramRepoUrl, materialUrl);
     }
 }
