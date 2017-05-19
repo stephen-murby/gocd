@@ -21,6 +21,7 @@ import java.util.List;
 
 import com.thoughtworks.go.server.materials.postcommit.git.GitPostCommitHookImplementer;
 import com.thoughtworks.go.server.materials.postcommit.github.GitHubPostCommitHookImplementer;
+import com.thoughtworks.go.server.materials.postcommit.github.GitHubWebHookMessageParser;
 import com.thoughtworks.go.server.materials.postcommit.mercurial.MercurialPostCommitHookImplementer;
 import com.thoughtworks.go.server.materials.postcommit.pluggablescm.PluggableSCMPostCommitHookImplementer;
 import com.thoughtworks.go.server.materials.postcommit.svn.SvnPostCommitHookImplementer;
@@ -115,7 +116,7 @@ public class PostCommitHookMaterialTypeResolver {
 
         @Override
         public PostCommitHookImplementer getImplementer() {
-            return new GitHubPostCommitHookImplementer();
+            return new GitHubPostCommitHookImplementer(new GitHubWebHookMessageParser());
         }
     }
 
