@@ -44,8 +44,9 @@ public class GitHubPostCommitHookImplementer implements PostCommitHookImplemente
     public Set<Material> prune(Set<Material> materials, Map params) {
         GitHubRepository gitHubRepository;
         try {
-            gitHubRepository = gitHubWebHookMessageParser.parse(params).getRepository();
-            if (hasRepositoryFields(gitHubRepository)) {
+            GitHubPushEvent githubPushEvent = gitHubWebHookMessageParser.parse(params);
+            if (hasRepositoryFields(githubPushEvent)) {
+                gitHubRepository = githubPushEvent.getRepository();
                 return materials.stream()
                         .filter(material -> this.matchesGitHubRepository(material, gitHubRepository.getUrl(), gitHubRepository.getFullName()))
                         .collect(Collectors.toSet());
@@ -61,10 +62,11 @@ public class GitHubPostCommitHookImplementer implements PostCommitHookImplemente
                 && isUrlEqual(repoUrl, (GitMaterial) material, repoFullName);
     }
 
-    private boolean hasRepositoryFields(GitHubRepository repository) {
-        return repository != null
-                && repository.getUrl() != null
-                && repository.getFullName() != null;
+    private boolean hasRepositoryFields(GitHubPushEvent event) {
+        return event != null
+                && event.getRepository() != null
+                && event.getRepository().getUrl() != null
+                && event.getRepository().getFullName() != null;
     }
 
     private boolean isUrlEqual(String paramRepoUrl, GitMaterial material, String repoFullName) {
