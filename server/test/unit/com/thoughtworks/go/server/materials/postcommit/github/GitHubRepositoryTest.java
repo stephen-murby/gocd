@@ -23,21 +23,16 @@ import static org.junit.Assert.*;
 public class GitHubRepositoryTest {
     @Test
     public void emptyObjectEquals() throws Exception {
-        assertEquals(new GitHubRepository(), new GitHubRepository());
+        assertEquals(new GitHubRepository(null, null), new GitHubRepository(null, null));
     }
 
     @Test
     public void completeObjectEquals() throws Exception {
         final String URL = "some_url";
-        final String FULL_NAME = "some_url";
+        final String FULL_NAME = "some_name";
 
-        GitHubRepository actual = new GitHubRepository();
-        actual.setUrl(URL);
-        actual.setFullName(FULL_NAME);
-
-        GitHubRepository expected = new GitHubRepository();
-        expected.setUrl(URL);
-        expected.setFullName(FULL_NAME);
+        GitHubRepository actual = new GitHubRepository(URL, FULL_NAME);
+        GitHubRepository expected = new GitHubRepository(URL, FULL_NAME);
 
         assertEquals(actual, expected);
     }

@@ -27,6 +27,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -38,8 +39,6 @@ public class GitHubPostCommitHookImplementer implements PostCommitHookImplemente
         this.gitHubWebHookMessageParser = gitHubWebHookMessageParser;
     }
 
-    private final UrlMatchers validators = new UrlMatchers();
-
     @Override
     public Set<Material> prune(Set<Material> materials, Map params) {
         GitHubRepository gitHubRepository;
@@ -48,7 +47,12 @@ public class GitHubPostCommitHookImplementer implements PostCommitHookImplemente
             if (hasRepositoryFields(githubPushEvent)) {
                 gitHubRepository = githubPushEvent.getRepository();
                 return materials.stream()
-                        .filter(material -> this.matchesGitHubRepository(material, gitHubRepository.getUrl(), gitHubRepository.getFullName()))
+                        .filter(new Predicate<Material>() {
+                            @Override
+                            public boolean test(Material material) {
+                                return gitHubRepository.matchesMaterial(material);
+                            }
+                        })
                         .collect(Collectors.toSet());
             }
             return Sets.newHashSet();
@@ -57,32 +61,10 @@ public class GitHubPostCommitHookImplementer implements PostCommitHookImplemente
         }
     }
 
-    private boolean matchesGitHubRepository(Material material, String repoUrl, String repoFullName) {
-        return material instanceof GitMaterial
-                && isUrlEqual(repoUrl, (GitMaterial) material, repoFullName);
-    }
-
     private boolean hasRepositoryFields(GitHubPushEvent event) {
         return event != null
                 && event.getRepository() != null
                 && event.getRepository().getUrl() != null
                 && event.getRepository().getFullName() != null;
-    }
-
-    private boolean isUrlEqual(String paramRepoUrl, GitMaterial material, String repoFullName) {
-
-        URI repoUri;
-        String materialUrl = material.getUrlArgument().forCommandline();
-        try {
-            repoUri = new URI(paramRepoUrl);
-            Pattern pattern = Pattern.compile("^(git://|git@|https://|http://)" + repoUri.getHost() + "[/:]" + repoFullName + "(.git)?$");
-            if ( pattern.matcher(materialUrl).matches()) {
-                return true;
-            }
-        } catch (URISyntaxException e) {
-            e.printStackTrace();
-        }
-
-        return validators.perform(paramRepoUrl, materialUrl);
     }
 }

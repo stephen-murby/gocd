@@ -30,7 +30,7 @@ public class GitHubWebHookMessageParser {
         Gson gson = new GsonBuilder().create();
         GitHubPushEvent gitHubPushEvent = gson.fromJson(pushEventPayload, GitHubPushEvent.class);
         // A push event will have a commits field, other event type payloads will not.
-        return gitHubPushEvent.getCommits() == null ? null : gitHubPushEvent;
+        return gitHubPushEvent.hasCommits() == null ? null : gitHubPushEvent;
     }
 
     private String urlDecodePayload(Map params) throws UnsupportedEncodingException {

@@ -16,6 +16,7 @@
 
 package com.thoughtworks.go.server.materials.postcommit.github;
 
+import com.google.gson.JsonArray;
 import com.thoughtworks.go.config.materials.git.GitMaterial;
 import com.thoughtworks.go.domain.materials.Material;
 import com.thoughtworks.go.util.command.UrlArgument;
@@ -101,11 +102,7 @@ public class GitHubPostCommitHookImplementerTest {
         Map requestParameters = new HashMap<String, String>();
         requestParameters.put("payload", "good_payload");
 
-        GitHubPushEvent event = new GitHubPushEvent();
-        GitHubRepository repository = new GitHubRepository();
-        repository.setUrl("http://github.com/organisation/repository");
-        repository.setFullName("organisation/repository");
-        event.setRepository(repository);
+        GitHubPushEvent event = new GitHubPushEvent(new JsonArray(), new GitHubRepository("http://github.com/organisation/repository", "organisation/repository"));
 
         when(mockParser.parse(requestParameters)).thenReturn(event);
 
@@ -119,7 +116,7 @@ public class GitHubPostCommitHookImplementerTest {
         Map requestParameters = new HashMap<String, String>();
         requestParameters.put("payload", "bad_payload");
 
-        GitHubPushEvent event = new GitHubPushEvent();
+        GitHubPushEvent event = new GitHubPushEvent(null, null);
 
         when(mockParser.parse(requestParameters)).thenReturn(event);
 

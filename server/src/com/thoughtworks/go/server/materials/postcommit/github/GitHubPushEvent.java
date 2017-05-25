@@ -25,20 +25,17 @@ public class GitHubPushEvent {
     private JsonArray commits;
     private GitHubRepository repository;
 
-    public JsonArray getCommits() {
-        return commits;
+    public GitHubPushEvent(JsonArray commits, GitHubRepository repository) {
+        this.commits = commits;
+        this.repository = repository;
     }
 
-    public void setCommits(JsonArray commits) {
-        this.commits = commits;
+    public JsonArray hasCommits() {
+        return commits;
     }
 
     public GitHubRepository getRepository() {
         return repository;
-    }
-
-    public void setRepository(GitHubRepository repository) {
-        this.repository = repository;
     }
 
     @Override

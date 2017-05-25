@@ -16,10 +16,7 @@
 
 package com.thoughtworks.go.server.materials.postcommit.github;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -27,32 +24,19 @@ import static org.junit.Assert.*;
 public class GitHubPushEventTest {
     @Test
     public void emptyObjectEquals() throws Exception {
-        GitHubPushEvent expectedEvent = new GitHubPushEvent();
-        GitHubPushEvent actualEvent = new GitHubPushEvent();
+        GitHubPushEvent expectedEvent = new GitHubPushEvent(null, null);
+        GitHubPushEvent actualEvent = new GitHubPushEvent(null, null);
 
         assertEquals(actualEvent, expectedEvent);
     }
 
     @Test
     public void completeObjectEquals() throws Exception {
-        GitHubPushEvent expectedEvent = new GitHubPushEvent();
-        expectedEvent.setCommits(new JsonArray());
-        expectedEvent.setRepository(new GitHubRepository());
+        GitHubRepository REPOSITORY = new GitHubRepository("url", "name");
 
-        GitHubPushEvent actualEvent = new GitHubPushEvent();
-        actualEvent.setCommits(new JsonArray());
-        actualEvent.setRepository(new GitHubRepository());
+        GitHubPushEvent expectedEvent = new GitHubPushEvent(new JsonArray(), REPOSITORY);
+        GitHubPushEvent actualEvent = new GitHubPushEvent(new JsonArray(), REPOSITORY);
 
         assertEquals(actualEvent, expectedEvent);
-    }
-
-    @Test
-    public void string(){
-        GitHubPushEvent expectedEvent = new GitHubPushEvent();
-        expectedEvent.setCommits(new JsonArray());
-        expectedEvent.setRepository(new GitHubRepository());
-
-        Gson gson = new GsonBuilder().create();
-        System.out.println(gson.toJson(expectedEvent));
     }
 }
