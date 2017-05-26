@@ -19,6 +19,7 @@ package com.thoughtworks.go.server.materials.postcommit.github;
 import com.thoughtworks.go.config.materials.git.GitMaterial;
 import com.thoughtworks.go.domain.materials.Material;
 import com.thoughtworks.go.server.materials.postcommit.UrlMatchers;
+import org.apache.log4j.Logger;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -29,6 +30,7 @@ public class GitHubRepository {
     private final String url;
     private final String fullName;
     private final UrlMatchers validators = new UrlMatchers();
+    private static final Logger LOGGER = Logger.getLogger(GitHubRepository.class);
 
     public GitHubRepository(String url, String fullName) {
         this.url = url;
@@ -72,7 +74,7 @@ public class GitHubRepository {
                 return true;
             }
         } catch (URISyntaxException e) {
-            e.printStackTrace();
+            LOGGER.error("Unable to parse " + paramRepoUrl + " into a URI.", e);
         }
 
         return validators.perform(paramRepoUrl, materialUrl);

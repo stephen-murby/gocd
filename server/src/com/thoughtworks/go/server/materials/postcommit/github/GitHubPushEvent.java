@@ -30,8 +30,12 @@ public class GitHubPushEvent {
         this.repository = repository;
     }
 
-    public JsonArray hasCommits() {
+    public JsonArray getCommits() {
         return commits;
+    }
+
+    public boolean hasCommits() {
+        return this.commits != null;
     }
 
     public GitHubRepository getRepository() {

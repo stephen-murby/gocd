@@ -21,6 +21,7 @@ import com.thoughtworks.go.config.materials.git.GitMaterial;
 import com.thoughtworks.go.domain.materials.Material;
 import com.thoughtworks.go.server.materials.postcommit.PostCommitHookImplementer;
 import com.thoughtworks.go.server.materials.postcommit.UrlMatchers;
+import org.apache.log4j.Logger;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
@@ -34,6 +35,7 @@ import java.util.stream.Collectors;
 public class GitHubPostCommitHookImplementer implements PostCommitHookImplementer {
 
     private final GitHubWebHookMessageParser gitHubWebHookMessageParser;
+    private static final Logger LOGGER = Logger.getLogger(GitHubPostCommitHookImplementer.class);
 
     public GitHubPostCommitHookImplementer(GitHubWebHookMessageParser gitHubWebHookMessageParser) {
         this.gitHubWebHookMessageParser = gitHubWebHookMessageParser;
@@ -57,6 +59,7 @@ public class GitHubPostCommitHookImplementer implements PostCommitHookImplemente
             }
             return Sets.newHashSet();
         } catch (UnsupportedEncodingException e) {
+            LOGGER.error("Unable to parse the GitHub webhook payload.");
             return Sets.newHashSet();
         }
     }
