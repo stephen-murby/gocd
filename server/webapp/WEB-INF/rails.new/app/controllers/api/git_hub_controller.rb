@@ -19,16 +19,15 @@ class Api::GitHubController < Api::ApiController
   def notify
 
     # validate the request loosely originates from GitHub using the 'X-GiHub-Delivery' header.
-    if
-
-      # use the existing service to notify associated materials of update
+    if self.headers.key?("X-GitHub-Delivery")
       result = HttpLocalizedOperationResult.new
+      # use the existing service to notify associated materials of update
       material_update_service.notifyMaterialsForUpdate(current_user, params, result)
       self.response.headers['Content-Type'] = 'text/plain; charset=UTF-8'
       render_localized_operation_result result
     else
       # return bad request if the header was missing. (not strictly un-authorised, but we wouldn't want to perform the update)
+      render_error_response('Request has not come from GitHub', 401, true)
     end
-
   end
 end

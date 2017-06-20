@@ -1,6 +1,3 @@
-class GitHubControllerSpec
-end
-
 ##########################GO-LICENSE-START################################
 # Copyright 2014 ThoughtWorks, Inc.
 #
@@ -22,9 +19,26 @@ require 'spec_helper'
 describe Api::GitHubController do
   include APIModelMother
 
-  describe :notify do
-    it "should validate the request contains X-GitHub-Delivery header" do
-      expect(request.headers).to contain("X-GitHub-Delivery")
-    end
+  before :each do
+    @material_update_service = double('Material Update Service')
+    @user = Username.new(CaseInsensitiveString.new('go_user'))
+    controller.stub(:current_user).and_return(@user)
+    controller.stub(:material_update_service).and_return(@material_update_service)
+    @params = {:post_commit_hook_material_type => 'GitHub', :no_layout => true, :payload => { :event => 'push'}}
   end
+
+  describe :notify do
+
+    it "should validate the request contains X-GitHub-Delivery header" do
+      # need to mock the request object.
+    end
+
+    it "should return 401 when request does not contain required header" do
+      post :notify, @params
+      expect(response.status).to eq(401)
+      expect(response.body).to eq("Request has not come from GitHub\n")
+    end
+
+  end
+
 end
