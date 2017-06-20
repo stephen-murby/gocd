@@ -33,6 +33,14 @@ describe Api::GitHubController do
       # need to mock the request headers
     end
 
+    it "should validate the request contains X-GitHub-Event header" do
+      # need to mock the request headers
+    end
+
+    it "should validate the request contains X-Hub-Signature header" do
+      # need to mock the request headers
+    end
+
     it "should return 401 when request does not contain required header" do
       post :notify, @params
       expect(response.status).to eq(401)
