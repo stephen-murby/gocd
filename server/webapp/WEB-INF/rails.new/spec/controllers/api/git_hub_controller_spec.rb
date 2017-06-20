@@ -24,13 +24,13 @@ describe Api::GitHubController do
     @user = Username.new(CaseInsensitiveString.new('go_user'))
     controller.stub(:current_user).and_return(@user)
     controller.stub(:material_update_service).and_return(@material_update_service)
-    @params = {:post_commit_hook_material_type => 'GitHub', :no_layout => true, :payload => { :event => 'push'}}
+    @params = {:no_layout => true, :payload => { :event => 'push'}}
   end
 
   describe :notify do
 
     it "should validate the request contains X-GitHub-Delivery header" do
-      # need to mock the request object.
+      # need to mock the request headers
     end
 
     it "should return 401 when request does not contain required header" do
@@ -39,6 +39,18 @@ describe Api::GitHubController do
       expect(response.body).to eq("Request has not come from GitHub\n")
     end
 
-  end
+    it "should call the material update service with the payload from the request." do
+      # need to mock the request body
+    end
 
+    it "should set the 'post_commit_hook_material_type' on the params before it is passed to the material update service" do
+      # Check the material update service is called with a params object containing the key/value pair :post_commit_hook_material_type => 'GitHub'
+
+      ###
+      # We can take the material type as a given, as they are calling the specific GitHub endpoint,
+      # no need for them to specify it in the request, and it makes the webhook config on GitHub more simple.
+      ###
+
+    end
+  end
 end
