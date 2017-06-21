@@ -18,10 +18,9 @@ class Api::GitHubController < Api::ApiController
   before_action :verify_content_origin
   before_action :prempt_ping_call
   before_action :allow_only_push_event
+  before_action :verify_payload
 
   def notify
-    # result = HttpLocalizedOperationResult.new
-    # use the existing service to notify associated materials of update
     repo_full_name = payload['repository']['full_name']
     repo_html_url = payload['repository']['html_url']
     repo_branch = payload['ref'].gsub('refs/heads/', '')
@@ -60,9 +59,19 @@ class Api::GitHubController < Api::ApiController
     end
   end
 
+  def verify_payload
+    if payload.blank?
+      render text: 'Could not understand the payload!', content_type: 'text/plain', status: :bad_request, layout: nil
+    end
+  rescue => e
+    Rails.logger.warn('Could not understand github webhook payload:')
+    Rails.logger.warn(e)
+    render text: 'Could not understand the payload!', content_type: 'text/plain', status: :bad_request, layout: nil
+  end
+
   def payload
     if request.content_mime_type == :url_encoded_form
-      JSON.parse(params[:payload])
+      JSON.parse(CGI.unescape(params[:payload]))
     elsif request.content_mime_type == :json
       JSON.parse(request.raw_post)
     end
