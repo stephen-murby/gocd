@@ -70,13 +70,13 @@ class Api::GitHubController < Api::ApiController
 
   def verify_content_origin
     if request.headers['X-Hub-Signature'].blank?
-      return render_message("No HMAC signature specified via `X-Hub-Signature' header!", :bad_request)
+      return render text: "No HMAC signature specified via `X-Hub-Signature' header!", content_type: 'text/plain', status: :bad_request, layout: nil
     end
 
     expected_signature = 'sha1=' + OpenSSL::HMAC.hexdigest(OpenSSL::Digest.new('sha1'), webhook_secret, request.body.read)
 
     unless Rack::Utils.secure_compare(expected_signature, request.headers['X-Hub-Signature'])
-      render_message("HMAC signature specified via `X-Hub-Signature' did not match!", :bad_request)
+      render text: "HMAC signature specified via `X-Hub-Signature' did not match!", content_type: 'text/plain', status: :bad_request, layout: nil
     end
   end
 

@@ -28,7 +28,7 @@ describe Api::GitHubController do
 
   describe :notify do
 
-    it 'should call the material update service upon receiving a good request' do
+    it 'should call the material update service upon receiving a good request and respond with 202 [accepted]' do
       @server_config_service.should_receive(:getWebhookSecret).and_return('secret')
       params = { 'repository' => { 'full_name' => 'org/repo', 'html_url' => 'https://github.com/org/repo'}, 'ref' => 'refs/heads/branch'}
       request.stub(:body) do
@@ -73,7 +73,7 @@ describe Api::GitHubController do
       expect(response.body).to eq("{\n  \"message\": \"No HMAC signature specified via `X-Hub-Signature' header!\"\n}\n")
     end
 
-    it 'should respond with 200 [OK] upon receiving a GitHub ping event' do
+    it 'should respond with 202 [accepted] upon receiving a GitHub ping event' do
       @server_config_service.should_receive(:getWebhookSecret).and_return('secret')
       params = { 'zen' => 'some github zen', 'hook_id' => 'webhook id', 'hook' => {'id' => 'webhook id'}}
       request.stub(:body) do
