@@ -15,19 +15,72 @@
 ##########################GO-LICENSE-END##################################
 
 class Api::GitHubController < Api::ApiController
+  before_action :verify_content_origin
+  before_action :prempt_ping_call
+  before_action :allow_only_push_event
 
   def notify
+    # result = HttpLocalizedOperationResult.new
+    # use the existing service to notify associated materials of update
+    repo_full_name = payload['repository']['full_name']
+    repo_html_url = payload['repository']['html_url']
+    repo_branch = payload['ref'].gsub('refs/heads/', '')
 
-    # validate the request loosely originates from GitHub using the 'X-GiHub-Delivery' header.
-    if self.headers.key?("X-GitHub-Delivery")
-      result = HttpLocalizedOperationResult.new
-      # use the existing service to notify associated materials of update
-      material_update_service.notifyMaterialsForUpdate(current_user, params, result)
-      self.response.headers['Content-Type'] = 'text/plain; charset=UTF-8'
-      render_localized_operation_result result
+    repo_host_name = URI.parse(repo_html_url).host
+
+    possible_urls = %W(
+      https://#{repo_host_name}/#{repo_full_name}
+      https://#{repo_host_name}/#{repo_full_name}.git
+      http://#{repo_host_name}/#{repo_full_name}
+      http://#{repo_host_name}/#{repo_full_name}.git
+      git://#{repo_host_name}/#{repo_full_name}
+      git://#{repo_host_name}/#{repo_full_name}.git
+      git@#{repo_host_name}:#{repo_full_name}
+      git@#{repo_host_name}:#{repo_full_name}.git
+    )
+
+    if material_update_service.updateGitMaterial(repo_branch, possible_urls)
+      render text: 'OK!', content_type: 'text/plain', status: :accepted, layout: nil
     else
-      # return bad request if the header was missing. (not strictly un-authorised, but we wouldn't want to perform the update)
-      render_error_response('Request has not come from GitHub', 401, true)
+      render text: 'No matching materials!', content_type: 'text/plain', status: :accepted, layout: nil
     end
+  end
+
+  protected
+
+  def allow_only_push_event
+    unless request.headers['X-GitHub-Event'] == 'push'
+      render text: "Ignoring event of type `#{request.headers['X-GitHub-Event']}'", content_type: 'text/plain', status: :accepted, layout: nil
+    end
+  end
+
+  def prempt_ping_call
+    if request.headers['X-GitHub-Event'] == 'ping'
+      render text: payload['zen'], content_type: 'text/plain', status: :accepted, layout: nil
+    end
+  end
+
+  def payload
+    if request.content_mime_type == :url_encoded_form
+      JSON.parse(params[:payload])
+    elsif request.content_mime_type == :json
+      JSON.parse(request.raw_post)
+    end
+  end
+
+  def verify_content_origin
+    if request.headers['X-Hub-Signature'].blank?
+      return render_message("No HMAC signature specified via `X-Hub-Signature' header!", :bad_request)
+    end
+
+    expected_signature = 'sha1=' + OpenSSL::HMAC.hexdigest(OpenSSL::Digest.new('sha1'), webhook_secret, request.body.read)
+
+    unless Rack::Utils.secure_compare(expected_signature, request.headers['X-Hub-Signature'])
+      render_message("HMAC signature specified via `X-Hub-Signature' did not match!", :bad_request)
+    end
+  end
+
+  def webhook_secret
+    server_config_service.getWebhookSecret
   end
 end
