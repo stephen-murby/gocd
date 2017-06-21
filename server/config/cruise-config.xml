@@ -41,21 +41,5 @@
         </jobs>
       </stage>
     </pipeline>
-    <pipeline name="testing-webhooks">
-      <materials>
-        <git url="https://github.atcloud.io/testing-webhooks/testing-webhooks.git" autoUpdate="false" />
-      </materials>
-      <stage name="defaultStage">
-        <jobs>
-          <job name="defaultJob">
-            <tasks>
-              <exec command="touch">
-                <arg>repo.log</arg>
-              </exec>
-            </tasks>
-          </job>
-        </jobs>
-      </stage>
-    </pipeline>
   </pipelines>
 </cruise>

@@ -17,7 +17,6 @@
 package com.thoughtworks.go.server.materials.postcommit;
 
 import com.thoughtworks.go.server.materials.postcommit.git.GitPostCommitHookImplementer;
-import com.thoughtworks.go.server.materials.postcommit.github.GitHubPostCommitHookImplementer;
 import com.thoughtworks.go.server.materials.postcommit.mercurial.MercurialPostCommitHookImplementer;
 import com.thoughtworks.go.server.materials.postcommit.pluggablescm.PluggableSCMPostCommitHookImplementer;
 import com.thoughtworks.go.server.materials.postcommit.svn.SvnPostCommitHookImplementer;
@@ -61,15 +60,6 @@ public class PostCommitHookMaterialTypeResolverTest {
         assertThat(materialType.isKnown(), is(true));
         assertThat(materialType.isValid("GIT"), is(true));
         assertThat(materialType.getImplementer() instanceof GitPostCommitHookImplementer, is(true));
-    }
-
-    @Test
-    public void shouldReturnGithubPostCommitHookMaterialType() {
-        final PostCommitHookMaterialType materialType = resolver.toType("GITHUB");
-        assertThat(materialType instanceof PostCommitHookMaterialTypeResolver.GithubPostCommitHookMaterialType, is(true));
-        assertThat(materialType.isKnown(), is(true));
-        assertThat(materialType.isValid("GITHUB"), is(true));
-        assertThat(materialType.getImplementer() instanceof GitHubPostCommitHookImplementer, is(true));
     }
 
     @Test
